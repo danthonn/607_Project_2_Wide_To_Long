@@ -1,0 +1,158 @@
+---
+title: "R_607_Project_2_Wide_to_Long_Transform_Data_Daniel_Thonn"
+output: html_document
+course: R-607 CUNY MSDA program
+
+---
+
+## Assignment 607_Project_2_Wide_to_Long_Transform_Concrete_Blocks_Daniel_Thonn
+
+Summary of Assignment
+This assignment involves Tidying and Transforming data
+
+This Assignment requires the following:
+
+1). R-Studio
+
+The following R-packages are used:
+1.tidyr
+2.dplyr
+3.ggplot2 
+
+Steps to reproduce:
+1). Place file on local system: C:/mysqldata/Construction_Materials_Table_Wide_1d4.csv
+2). run the R-Studio file: R_607_Project_2_Wide_to_Long_Daniel_Thonn_1b.Rmd
+
+
+
+Setting up and Preparing the Environment
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=TRUE}
+
+#install.packages("stringr")
+#install.packages("tidyr")
+#install.packages("dplyr")
+#install.packages("plyr")
+#library(stringr)
+library(tidyr)
+library(dplyr)
+#library(plyr)
+#detach("package:plyr", unload=TRUE)
+library(ggplot2)
+
+```
+
+
+Load the character names data into an R dataframe, cleanup, and convert to long format
+
+
+```{r, echo=TRUE}
+
+# Load the data csv file to a vector
+b <- read.csv(
+              "C:/mysqldata/Construction_Materials_Table_Wide_1d4.csv",
+              sep=",",
+              na.strings = "",
+              blank.lines.skip = TRUE,
+                stringsAsFactors=FALSE)
+list(b)
+
+# Convert the input vector to a dataframe
+df_Const_Matls_1 = data.frame(b)
+list(df_Const_Matls_1)
+df_Const_Matls_1b <- df_Const_Matls_1
+#names(df_Const_Matls_1b)[names(df_Const_Matls_1b) == "X2009"] <- "2009"
+#names(df_Const_Matls_1b)[names(df_Const_Matls_1b) == "X2010"] <- "2010"
+#names(df_Const_Matls_1b)[names(df_Const_Matls_1b) == "X2011"] <- "2011"
+#names(df_Const_Matls_1b)[names(df_Const_Matls_1b) == "X2012"] <- "2012"
+#names(df_Const_Matls_1b)[names(df_Const_Matls_1b) == "X2013"] <- "2013"
+#names(df_Const_Matls_1b)
+
+
+# Convert wide dataframe into long dataframe
+df_Const_Matls_1_long <- gather(df_Const_Matls_1,Year,Price_Index, X2009:X2013) %>% arrange(Material.Category)
+#df_Const_Matls_1_long <- gather(df_Const_Matls_1b,Year,Price_Index, 2009:2013) %>% arrange(Material.Category)
+
+list(df_Const_Matls_1_long)
+df_Const_Matls_1a_long <- df_Const_Matls_1_long
+df_Const_Matls_1a_long$Year <- gsub("X", "",df_Const_Matls_1_long$Year)
+list(df_Const_Matls_1a_long)
+
+df_Const_Matls_1b_long <- df_Const_Matls_1a_long
+
+# Remove spaces from column Price_Index values
+df_Const_Matls_1_long$Price_Index
+df_Const_Matls_1b_long$Price_Index <- as.numeric(gsub("\\..{2}", "0",df_Const_Matls_1_long$Price_Index))
+df_Const_Matls_1b_long$Price_Index
+
+
+# Remove NA's in Price_Index column
+df_Const_Matls_1c_long <- df_Const_Matls_1b_long
+df_Const_Matls_1c_long$Price_Index <- replace(df_Const_Matls_1b_long$Price_Index, is.na(df_Const_Matls_1b_long$Price_Index), 0) 
+
+df_Const_Matls_1c_long$Price_Index
+names(df_Const_Matls_1c_long)
+
+# Test
+#p <- ggplot(df_Const_Matls_1c_long, aes(x=Year, y=Price_Index, group=Materials.Type)) + geom_line()
+#p 
+
+# Plot Range of values per year
+qplot(x=Year,y=Price_Index, data=df_Const_Matls_1c_long, geom="line")
+
+
+# Plot range of price_index values per Materials.Type
+qplot(x=Materials.Type,y=Price_Index, data=df_Const_Matls_1c_long, geom="line") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+
+# Plot range of price_index values per Materials.Type per year
+ggplot(df_Const_Matls_1c_long, aes(Materials.Type, Price_Index, group = Year, colour = Year)) +
+  geom_path(alpha = 0.5) + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+
+# Setup group by criteria by Materials.Type
+By_Materials_Type_1 <- group_by(df_Const_Matls_1c_long,Materials.Type,Year) 
+By_Materials_Type_1
+
+By_Materials_Type_1 %>% ggplot(aes(x=Year, y=Price_Index)) + geom_line()
+
+
+# Select columns for analysis dataframe by Materials.Type
+By_Materials_Type_2 <- select(By_Materials_Type_1,Materials.Type,Year,Price_Index)
+By_Materials_Type_2
+
+
+# Present columns based on select and group-by criteria
+By_Materials_Type_3 <- summarise(By_Materials_Type_2,Mean_Price_Index = mean(Price_Index))
+By_Materials_Type_3
+
+# Graph Materials.Type and Price_Index per Year
+By_Materials_Type_3 %>%
+ggplot(aes(Materials.Type, Mean_Price_Index, group = Year, colour = Year)) +
+  geom_path(alpha = 0.5) + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+# Graph by Mean_Price_Index per year
+By_Materials_Type_3 %>%
+ggplot(aes(Year, y = Mean_Price_Index,group = Year)) +
+  geom_path(alpha = 0.5) + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+
+```
+   
+
+Conclusion: 
+The overall Mean_Price_Index dipped in 2010, but has been steadily increasing from 2010 to 2014.
+
+
+
+
+
+
+
+
+
+
+#END

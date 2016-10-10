@@ -1,0 +1,125 @@
+---
+title: "R_607_Project_2_Wide_to_Long_Transform_Data_Daniel_Thonn"
+output: html_document
+course: R-607 CUNY MSDA program
+
+---
+
+## Assignment 607_Project_2_Wide_to_Long_Transform_Birth Data_Daniel_Thonn
+
+Summary of Assignment
+This assignment involves Tidying and Transforming data
+
+This Assignment requires the following:
+
+1). R-Studio
+
+The following R-packages are used:
+1.tidyr
+2.dplyr
+3.ggplot2 
+
+Steps to reproduce:
+
+1). Place the file locally: C:/mysqldata/Wide_Birth_Data_2.csv
+
+2). run the R-Studio file: R_607_Project_2_Wide_to_Long_Daniel_Thonn_3a.Rmd
+
+
+Setting up and Preparing the Environment
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=TRUE}
+
+#install.packages("stringr")
+#install.packages("tidyr")
+#install.packages("dplyr")
+#install.packages("plyr")
+#library(stringr)
+library(tidyr)
+library(dplyr)
+#library(plyr)
+#detach("package:plyr", unload=TRUE)
+library(ggplot2)
+
+```
+
+
+Load the character names data into an R dataframe, cleanup, and convert to long format
+
+
+```{r, echo=TRUE}
+
+# Load the data csv file to a vector
+d <- read.csv(
+              "C:/mysqldata/Wide_Birth_Data_2.csv",
+              sep=",",
+              na.strings = "",
+              blank.lines.skip = TRUE,
+                stringsAsFactors=FALSE)
+list(d)
+
+# Convert the input vector to a dataframe
+df_Birth_Data_1 = data.frame(d)
+df_Birth_Data_1
+
+df_Birth_Data_1b <- df_Birth_Data_1
+df_Birth_Data_1b
+
+names(df_Birth_Data_1b)[names(df_Birth_Data_1b) == "v012"] <- "MothersAge"
+names(df_Birth_Data_1b)[names(df_Birth_Data_1b) == "b2_01"] <- "BirthYear1"
+names(df_Birth_Data_1b)[names(df_Birth_Data_1b) == "b2_02"] <- "Birthyear2"
+names(df_Birth_Data_1b)[names(df_Birth_Data_1b) == "b2_03"] <- "Birthyear3"
+names(df_Birth_Data_1b)[names(df_Birth_Data_1b) == "b4_01"] <- "Sexbirth1"
+names(df_Birth_Data_1b)[names(df_Birth_Data_1b) == "b4_02"] <- "Sexbirth2"
+names(df_Birth_Data_1b)[names(df_Birth_Data_1b) == "b4_03"] <- "Sexbirth3"
+
+
+df_Birth_Data_1b
+names(df_Birth_Data_1b)
+
+# Convert wide dataframe into long dataframe - Birthyear
+df_Birth_Data_1b_long <- gather(df_Birth_Data_1b,BirthyearCategory,Birthyear,BirthYear1,Birthyear2,Birthyear3) 
+# %>% arrange(MothersAge)
+df_Birth_Data_1b_long
+
+# Convert wide dataframe into long dataframe - SexBirth
+df_Birth_Data_1c_long <- gather(df_Birth_Data_1b_long,SexBirthCategory,Gender,Sexbirth1,Sexbirth2,Sexbirth3) 
+# %>% arrange(MothersAge)
+df_Birth_Data_1c_long
+
+df_Birth_Data_1d_long <- df_Birth_Data_1c_long
+df_Birth_Data_1d_long
+# Cleanup dataframe with appropriate values
+df_Birth_Data_1d_long$Gender <- gsub("1", "M", df_Birth_Data_1d_long$Gender)
+df_Birth_Data_1d_long$Gender <- gsub("2", "F", df_Birth_Data_1d_long$Gender)
+df_Birth_Data_1d_long$Gender <- gsub("NA", "", df_Birth_Data_1d_long$Gender)
+df_Birth_Data_1d_long$Birthyear <- gsub("NA", "", df_Birth_Data_1d_long$Birthyear)
+
+df_Birth_Data_1d_long
+
+# Plot-1 Range of values per Mothers Age and BirthyearCategory
+qplot(x=MothersAge,y=BirthyearCategory, data=df_Birth_Data_1d_long, geom="line",colour = Gender)
+
+
+# Plot-2 range of MothersAge values per BirthyearCategory
+qplot(x=MothersAge,y=Gender, data=df_Birth_Data_1d_long, geom="line") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+
+# Plot-3 range of Percent_Income values per Religious.tradition by IncomeRange
+ggplot(df_Birth_Data_1d_long, aes(BirthyearCategory,Gender, group = MothersAge, colour = MothersAge)) + geom_path(alpha = 0.5) + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+
+
+```
+   
+
+Conclusion: In Plot-2 it can be seen that more of the younger mothers had a Male child.  In Plot-3 it can be seen that there are instances of a first child male and second child female, a first child female and second child male, and first child male and second child male, as well as first child female and second child female.
+
+
+
+
+
+#END

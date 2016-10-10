@@ -1,0 +1,132 @@
+---
+title: "R_607_Project_2_Wide_to_Long_Transform_Data_Daniel_Thonn"
+output: html_document
+course: R-607 CUNY MSDA program
+
+---
+
+## Assignment 607_Project_2_Wide_to_Long_Transform_Income_Distribution_By_Religion_Daniel_Thonn
+
+Summary of Assignment
+This assignment involves Tidying and Transforming flight data
+
+This Assignment requires the following:
+
+1). R-Studio
+
+The following R-packages are used:
+1.tidyr
+2.dplyr
+3.ggplot2 
+
+Steps to reproduce:
+1). Place file locally: C:/mysqldata/Income_Distribution_by_Religion.csv
+
+2). run the R-Studio file: R_607_Project_2_Wide_to_Long_Daniel_Thonn_2a.Rmd
+
+
+Setting up and Preparing the Environment
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=TRUE}
+
+#install.packages("stringr")
+#install.packages("tidyr")
+#install.packages("dplyr")
+#install.packages("plyr")
+#library(stringr)
+library(tidyr)
+library(dplyr)
+#library(plyr)
+#detach("package:plyr", unload=TRUE)
+library(ggplot2)
+
+```
+
+
+Load the character names data into an R dataframe, cleanup, and convert to long format
+
+
+```{r, echo=TRUE}
+
+# Load the data csv file to a vector
+c <- read.csv(
+              "C:/mysqldata/Income_Distribution_by_Religion.csv",
+              sep=",",
+              na.strings = "",
+              blank.lines.skip = TRUE,
+                stringsAsFactors=FALSE)
+list(c)
+
+# Convert the input vector to a dataframe
+df_Income_Religion_1 = data.frame(c)
+df_Income_Religion_1
+df_Income_Religion_1b = df_Income_Religion_1[, !(colnames(df_Income_Religion_1) %in% c("Sample.Size"))]
+df_Income_Religion_1b
+
+names(df_Income_Religion_1b)[names(df_Income_Religion_1b) == "Less.than..30.000"] <- "Lessthan30"
+names(df_Income_Religion_1b)[names(df_Income_Religion_1b) == "X.30.000....49.999"] <- "In30to49"
+names(df_Income_Religion_1b)[names(df_Income_Religion_1b) == "X.50.000....99.000"] <- "In50to99"
+names(df_Income_Religion_1b)[names(df_Income_Religion_1b) == "X.100.000.or.more"] <- "In100plus"
+
+df_Income_Religion_1b
+
+names(df_Income_Religion_1b)
+
+
+# Convert wide dataframe into long dataframe
+df_Income_Religion_1_long <- gather(df_Income_Religion_1b,IncomeRange,Percent_Income,Lessthan30,In30to49,In50to99,In100plus) %>% arrange(Religious.tradition)
+df_Income_Religion_1_long
+
+
+# Plot-1 Range of values per IncomeRange
+qplot(x=IncomeRange,y=Percent_Income, data=df_Income_Religion_1_long, geom="line")
+
+
+# Plot-2 range of Percent_Income values per Religious.tradition
+qplot(x=Religious.tradition,y=Percent_Income, data=df_Income_Religion_1_long, geom="line") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+
+# Plot-3 range of Percent_Income values per Religious.tradition by IncomeRange
+ggplot(df_Income_Religion_1_long, aes(Religious.tradition, Percent_Income, group = IncomeRange, colour = IncomeRange)) + geom_path(alpha = 0.5) + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+
+# Setup group by criteria by IncomeRange
+By_Income_Range_1 <- group_by(df_Income_Religion_1_long,Religious.tradition,IncomeRange) 
+By_Income_Range_1
+
+By_Income_Range_1 %>% ggplot(aes(x=IncomeRange, y=Percent_Income)) + geom_line()
+
+
+# Select columns for analysis dataframe by IncomeRange
+By_Income_Range_2 <- select(By_Income_Range_1,Religious.tradition,IncomeRange,Percent_Income)
+By_Income_Range_2
+
+
+# Present columns based on select and group-by criteria
+By_Income_Range_3 <- summarise(By_Income_Range_2,Mean_Percent_Income = mean(Percent_Income))
+By_Income_Range_3
+
+# Plot-4: Graph Religious.tradition and Mean_Percent_Income per IncomeRange
+By_Income_Range_3 %>%
+ggplot(aes(Religious.tradition, Mean_Percent_Income, group = IncomeRange, colour = IncomeRange)) +
+  geom_path(alpha = 0.5) + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+# Plot-5: Graph by Mean_Percent_Income per Income Range 
+By_Income_Range_3%>%
+ggplot(aes(IncomeRange, y = Mean_Percent_Income,group = Religious.tradition, colour = Religious.tradition)) +
+  geom_path(alpha = 0.5) + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+
+```
+   
+
+Conclusion: The Percent_Income range is widest in the Lessthan30K and In100plus range income.  Also as shown in Plot-2 the widest range of Percent_Income is widest among Historically Black Protestant and Jehovahs witness and narrowest among Mainline Protestant and Mormon. Plot-4 shows that the Mean_Percent_Income is lowest among Historically Black Protestant and highest among Jewish.   Plot-5 shows that the widest disparities by religions is in the 100k plus range and in the Lessthan30k range.
+
+
+
+
+
+#END
